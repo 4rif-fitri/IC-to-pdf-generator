@@ -56,12 +56,13 @@ let GetPhoto = {
 			});
 		},
 
-		async openCamera() {
-			return await new Promise((resolve, reject) => {
+		// --- FUNGSI 1: KHUSUS UNTUK BUKA KAMERA SAHAJA ---
+		bukaKameraMati() {
+			return new Promise((resolve, reject) => {
 				const input = document.createElement("input");
 				input.type = "file";
 				input.accept = "image/*";
-				input.capture = "environment";
+				input.capture = "environment"; // Paksa buka kamera belakang telefon
 
 				input.onchange = (event) => {
 					const file = event.target.files[0];
@@ -71,44 +72,65 @@ let GetPhoto = {
 					}
 					resolve(file);
 				};
-
 				input.click();
 			});
 		},
 
-		async getPhoto() {
-			try {
-				// 1. Tunggu gambar diambil dari kamera
-				let file = await this.openCamera();
+		// --- FUNGSI 2: KHUSUS UNTUK BUKA GALERI SAHAJA ---
+		bukaGaleriMati() {
+			return new Promise((resolve, reject) => {
+				const input = document.createElement("input");
+				input.type = "file";
+				input.accept = "image/jpeg, image/png"; // Fokus kepada fail imej di storan
 
-				// 2. Tunggu proses olah gambar ke canvas selesai
+				input.onchange = (event) => {
+					const file = event.target.files[0];
+					if (!file) {
+						reject("No file selected");
+						return;
+					}
+					resolve(file);
+				};
+				input.click();
+			});
+		},
+
+		// --- LOGIK UTAMA MENGURUSKAN FAIL YANG DIPILIH ---
+		async prosesGambar(sumber) {
+			try {
+				let file;
+
+				// Tentukan fungsi mana yang patut dipanggil berdasarkan butang yang ditekan
+				if (sumber === 'kamera') {
+					file = await this.bukaKameraMati();
+				} else {
+					file = await this.bukaGaleriMati();
+				}
+
+				// Olah gambar ke canvas & hadkan tinggi
 				let base64Image = await this.drawImageToCanvas(file);
 
-				// 3. Masukkan ke dalam array mengikut indeks semasa
+				// Masukkan ke dalam array
 				this.arrayPhotoData.push(base64Image);
-
-				// 4. Naikkan kaunter semasa
 				this.photoCountCurrent++;
 
-				console.log(`Gambar ${this.photoCountCurrent}/${this.photoCount} berjaya diambil.`);
+				console.log(`Gambar ${this.photoCountCurrent}/${this.photoCount} berjaya diproses.`);
 
-				// 5. Semak jika jumlah gambar sudah mencukupi had
+				// Semak had maksimum gambar
 				if (this.photoCountCurrent >= this.photoCount) {
-					console.log("Semua gambar selesai diambil, bersiap sedia untuk hantar ke EDIT:", this.arrayPhotoData);
-
+					console.log("Semua gambar selesai, hantar ke EDIT:", this.arrayPhotoData);
 					const rawArray = JSON.parse(JSON.stringify(this.arrayPhotoData));
 
-					// Navigasi ke page Edit
 					this.$router.push({
 						name: "Edit",
 						state: { PhotoData: rawArray }
 					});
 				} else {
-					alert(`Sila ambil ${this.photoCount - this.photoCountCurrent} gambar lagi.`);
+					alert(`Sila masukkan ${this.photoCount - this.photoCountCurrent} gambar lagi.`);
 				}
 
 			} catch (error) {
-				console.error("User batalkan tangkap gambar atau ralat berlaku:", error);
+				console.error("User batalkan tindakan atau ralat berlaku:", error);
 			}
 		}
 	},
@@ -125,15 +147,24 @@ let GetPhoto = {
                </div>
 
                <div class="container text-center p-4">
-                    <h3 class="mb-3">Sesi Tangkap Gambar ({{ photoCountCurrent }} / {{ photoCount }})</h3>
+                    <h3 class="mb-4">Sesi Ambil Gambar ({{ photoCountCurrent }} / {{ photoCount }})</h3>
                     
-                    <button class="btn btn-primary btn-lg" @click="getPhoto">
-                         <i class="fa-solid fa-camera me-2"></i> Ambil Gambar
-                    </button>
+                    <div class="d-flex flex-column gap-3 max-width-mobile mx-auto" style="max-width: 340px;">
+                         
+                         <button class="btn btn-primary btn-lg py-3 rounded-3 shadow-sm" @click="prosesGambar('kamera')">
+                              <i class="fa-solid fa-camera me-2"></i> Ambil Dari Kamera
+                         </button>
+                         
+                         <button class="btn btn-success btn-lg py-3 rounded-3 shadow-sm" @click="prosesGambar('galeri')">
+                              <i class="fa-solid fa-images me-2"></i> Ambil Dari Galeri
+                         </button>
 
-                    <div class="mt-3 text-muted" v-if="photoCountCurrent < photoCount">
-                         Sila ambil gambar sehingga cukup {{ photoCount }} keping untuk dihantar.
                     </div>
+				
+                    <div class="mt-4 text-muted small" v-if="photoCountCurrent < photoCount">
+                         Sila lengkapkan {{ photoCount }} keping gambar untuk meneruskan proses suntingan.
+                    </div>
+
                </div>
           </div>
      `
