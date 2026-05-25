@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+
+	<script src="./lib/vue.global.js"></script>
+	<script src="./lib/vue-router.global.js"></script>
+
+	<!-- bootstrap -->
+	<link rel="stylesheet" href="./lib/bootstrap.css">
+	<script src="./lib/bootstrap.js"></script>
+
+	<!-- jquery -->
+	<script src="./lib/jquery.js"></script>
+
+	<!-- font-awesome -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+	<!-- style -->
+	<link rel="stylesheet" href="./style.css">
+	<script src="./app.js"></script>
+	<!-- js -->
+	 <link rel="stylesheet" href="./lib/cropper.min.css">
+	 <script src="./lib/cropper.min.js"></script>
+	<script src="./lib/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+	<div id="root">
+		<router-view></router-view>
+	</div>
+
+
+	<script type="module">
+		let { createApp } = Vue
+		let { createRouter, createWebHashHistory } = VueRouter
+
+		import Index from "./pages/Index.js"
+		import GetPhoto from "./pages/GetPhoto.js"
+		import Edit from "./pages/Edit.js" // 1. Import di sini
+
+		let routes = [
+			{ path: "/", name: "Index", component: Index },
+			{ path: "/getPhoto/:mode", name: "GetPhoto", component: GetPhoto },
+			{ path: "/edit", name: "Edit", component: Edit } // 2. Tambah route di sini
+		]
+
+		let router = createRouter({
+			history: createWebHashHistory(),
+			routes
+		})
+
+		createApp({}).use(router).mount("#root")
+
+	</script>
+</body>
+
+</html>
