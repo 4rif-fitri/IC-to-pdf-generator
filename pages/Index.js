@@ -21,6 +21,8 @@ let Index = {
 			</button>
 			<hr>
 			<p class="text-primary">#Web ini tidak mengambil sebarang data peribadi</p>
+			<p class="text-secondary asdfg">&copy;Arif</p>
+
 		</div>
 	
 	<div class="modal fade" id="modal">
