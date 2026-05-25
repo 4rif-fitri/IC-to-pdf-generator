@@ -15,7 +15,7 @@ let Edit = {
 					src: imgStr,
 					croppedSrc: null, // Akan diisi oleh auto crop di bawah
 					rotation: 0,
-					isGrayscale: false,
+					isGrayscale: true, // === AUTO SELECT HITAM PUTIH DI SINI ===
 					pdfWidthFactor: 0.40 // Default 40%
 				}
 			});
@@ -37,7 +37,7 @@ let Edit = {
 		}
 	},
 	methods: {
-		// --- LOGIK BARU: AUTO CROP SECARA SENYAP MENGGUNAKAN CANVAS (NISBAH IC 85/54) ---
+		// --- LOGIK: AUTO CROP SECARA SENYAP MENGGUNAKAN CANVAS (NISBAH IC 110/70) ---
 		autoCropKeSaizIC(src) {
 			return new Promise((resolve, reject) => {
 				const img = new Image();
@@ -46,7 +46,7 @@ let Edit = {
 					const canvas = document.createElement("canvas");
 					const ctx = canvas.getContext("2d");
 
-					const targetRatio = 110 / 70; // Nisbah IC tulen
+					const targetRatio = 110 / 70; // Nisbah IC tulen anda
 					let sourceX = 0;
 					let sourceY = 0;
 					let sourceWidth = img.width;
@@ -173,7 +173,6 @@ let Edit = {
 			for (let i = 0; i < jumlahGambar; i++) {
 				const gbr = this.senaraiGambar[i];
 
-				// Gunakan imej croppedSrc (sama ada hasil auto atau hasil manual)
 				const imejPilihan = gbr.croppedSrc ? gbr.croppedSrc : gbr.src;
 				const img = await this.loadImage(imejPilihan);
 
@@ -284,7 +283,6 @@ let Edit = {
                                                        <button @click="bukaModalCrop(index)" class="btn btn-primary flex-fill py-2">
                                                             <i class="fa-solid fa-crop me-1"></i> Crop
                                                        </button>
-
                                                        <button @click="tukarHitamPutih(index)" 
                                                                :class="['btn flex-fill py-2', gbr.isGrayscale ? 'btn-dark' : 'btn-outline-dark']">
                                                             <i class="fa-solid fa-circle-half-stroke me-1"></i> B&W
