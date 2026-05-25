@@ -15,12 +15,11 @@ let Index = {
 	template: `
 		
 		<div class="card bg-white d-flex justify-content-center align-items-center"
-			style="width: 25rem;height: 10rem;">
+		style="width: 25rem;height: 10rem;">
+		<p class="text-primary">#Web ini tidak mengambil sebarang data peribadi</p>
 			<button class="btn btn-primary w-50" data-bs-toggle="modal" data-bs-target="#modal">
 				Scan Your IC
 			</button>
-			<hr>
-			<p class="text-primary">#Web ini tidak mengambil sebarang data peribadi</p>
 			<p class="text-secondary asdfg">&copy;Arif</p>
 
 		</div>
