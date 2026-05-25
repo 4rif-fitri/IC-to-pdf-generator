@@ -26,20 +26,17 @@ let Index = {
 	<div class="modal fade" id="modal">
 		<div class="modal-dialog modal-dialog-centered">
 			<div class="modal-content">
-				<div class="modal-header">
-					<p class="h2 text-center">Berapa Page?</p>
-				</div>
 				<div class="modal-body">
 					<div class="d-flex gap-3">
 
 						<button data-bs-dismiss="modal" @click="toOnePage" class="btn w-50 btn-outline-primary py-4">
 							<i class="fa-solid fa-id-card me-2"></i>
-							1 Page
+							Depan Sahaja
 						</button>
 
 						<button data-bs-dismiss="modal"Q @click="toTwoPage" class="btn w-50 btn-outline-success py-4">
 							<i class="fa-solid fa-copy me-2"></i>
-							2 Page
+							Depan Belakang
 						</button>
 
 					</div>
