@@ -7,32 +7,92 @@ let Edit = {
 			indexGambarSedangDiedit: null
 		}
 	},
-	mounted() {
+	async mounted() {
 		if (history.state && history.state.PhotoData) {
-			this.senaraiGambar = history.state.PhotoData.map(imgStr => {
+			// Map data awal gambar
+			const dataMentah = history.state.PhotoData.map(imgStr => {
 				return {
 					src: imgStr,
-					croppedSrc: null,
+					croppedSrc: null, // Akan diisi oleh auto crop di bawah
 					rotation: 0,
 					isGrayscale: false,
 					pdfWidthFactor: 0.40 // Default 40%
 				}
 			});
-			console.log("Data gambar berjaya dibawa ke halaman Edit:", this.senaraiGambar);
+
+			// Lakukan proses auto-crop pada setiap gambar secara automatik semasa preview
+			for (let i = 0; i < dataMentah.length; i++) {
+				try {
+					dataMentah[i].croppedSrc = await this.autoCropKeSaizIC(dataMentah[i].src);
+				} catch (err) {
+					console.error("Gagal melakukan auto-crop pada gambar indeks " + i, err);
+					dataMentah[i].croppedSrc = dataMentah[i].src; // Fallback guna gambar asal jika gagal
+				}
+			}
+
+			this.senaraiGambar = dataMentah;
+			console.log("Data gambar berjaya di auto-crop untuk halaman Preview:", this.senaraiGambar);
 		} else {
 			console.warn("Tiada data gambar yang diterima.");
 		}
 	},
 	methods: {
-		// --- KUMPULAN FUNGSI CROPPER.JS (DIKEMAS KINI) ---
+		// --- LOGIK BARU: AUTO CROP SECARA SENYAP MENGGUNAKAN CANVAS (NISBAH IC 85/54) ---
+		autoCropKeSaizIC(src) {
+			return new Promise((resolve, reject) => {
+				const img = new Image();
+				img.src = src;
+				img.onload = () => {
+					const canvas = document.createElement("canvas");
+					const ctx = canvas.getContext("2d");
+
+					const targetRatio = 110 / 70; // Nisbah IC tulen
+					let sourceX = 0;
+					let sourceY = 0;
+					let sourceWidth = img.width;
+					let sourceHeight = img.height;
+
+					// Kira ukuran pemotongan di bahagian tengah gambar (Center Crop)
+					if (img.width / img.height > targetRatio) {
+						// Gambar terlalu lebar, potong bahagian kiri dan kanan
+						sourceWidth = img.height * targetRatio;
+						sourceX = (img.width - sourceWidth) / 2;
+					} else {
+						// Gambar terlalu tinggi, potong bahagian atas dan bawah
+						sourceHeight = img.width / targetRatio;
+						sourceY = (img.height - sourceHeight) / 2;
+					}
+
+					// Set ukuran output canvas mengikut saiz kawasan yang dipotong
+					canvas.width = sourceWidth;
+					canvas.height = sourceHeight;
+
+					ctx.imageSmoothingEnabled = true;
+					ctx.imageSmoothingQuality = "high";
+
+					// Lukis bahagian tengah gambar sahaja ke dalam canvas
+					ctx.drawImage(
+						img,
+						sourceX, sourceY, sourceWidth, sourceHeight, // Koordinat asal gambar
+						0, 0, sourceWidth, sourceHeight              // Koordinat canvas destinasi
+					);
+
+					// Pulangkan hasil potongan dalam kualiti 100%
+					resolve(canvas.toDataURL("image/jpeg", 1.0));
+				};
+				img.onerror = (err) => reject(err);
+			});
+		},
+
+		// --- KUMPULAN FUNGSI CROPPER.JS (PENGGUNA MASIH BOLEH ADJUST MANUAL) ---
 		bukaModalCrop(index) {
 			this.indexGambarSedangDiedit = index;
 			const gbr = this.senaraiGambar[index];
 
 			const imejModal = document.getElementById("imageToCrop");
+			// Tukar fokus kepada gambar asal (.src) bukannya gambar yang dah di-crop supaya user boleh laras semula
 			imejModal.src = gbr.src;
 
-			// Reset inline style lama pada imej modal supaya tidak mengganggu Cropper
 			imejModal.style.width = '100%';
 			imejModal.style.height = 'auto';
 
@@ -44,14 +104,13 @@ let Edit = {
 
 				const self = this;
 				this.cropperInstance = new Cropper(imejModal, {
-					viewMode: 1, // Ditukar ke 1 supaya kotak crop tidak terkeluar dari sempadan imej
+					viewMode: 1,
 					dragMode: 'move',
-					autoCropArea: 1, // Kotak crop bermula dengan saiz penuh imej
-					aspectRatio: NaN,
+					autoCropArea: 0.85,
+					aspectRatio: 85 / 54, // Kekalkan nisbah IC semasa pelarasan manual
 					responsive: true,
 					restore: false,
 					ready() {
-						// Biarkan Cropper.js mengira kedudukan kotak secara automatik mengikut saiz imej asli
 						self.cropperInstance.crop();
 					}
 				});
@@ -63,15 +122,14 @@ let Edit = {
 		selesaiCrop() {
 			if (!this.cropperInstance) return;
 
-			// Ambil kualiti canvas tertinggi daripada Cropper
 			const canvasDipotong = this.cropperInstance.getCroppedCanvas({
 				imageSmoothingEnabled: true,
 				imageSmoothingQuality: 'high'
 			});
 
-			// Kekalkan kualiti 100% (1.0)
 			const hasilBase64 = canvasDipotong.toDataURL("image/jpeg", 1.0);
 
+			// Kemas kini croppedSrc dengan hasil potongan manual pengguna
 			this.senaraiGambar[this.indexGambarSedangDiedit].croppedSrc = hasilBase64;
 
 			$('#cropModal').modal('hide');
@@ -115,6 +173,7 @@ let Edit = {
 			for (let i = 0; i < jumlahGambar; i++) {
 				const gbr = this.senaraiGambar[i];
 
+				// Gunakan imej croppedSrc (sama ada hasil auto atau hasil manual)
 				const imejPilihan = gbr.croppedSrc ? gbr.croppedSrc : gbr.src;
 				const img = await this.loadImage(imejPilihan);
 

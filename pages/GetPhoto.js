@@ -17,42 +17,42 @@ let GetPhoto = {
 				const ctx = canvas.getContext("2d");
 				const img = new Image();
 
-				img.src = URL.createObjectURL(file);
+				const objectUrl = URL.createObjectURL(file);
 
 				img.onload = () => {
-					// === TETAPAN HAD TINGGI (LIMIT HEIGHT) DI SINI ===
-					const MAX_HEIGHT = 1280; // Anda boleh tukar had tinggi piksel di sini (cth: 1080, 1280, 1920)
-					let targetWidth = img.width;
-					let targetHeight = img.height;
+					let originalWidth = img.naturalWidth || img.width;
+					let originalHeight = img.naturalHeight || img.height;
 
-					// Jika tinggi gambar melebihi had, kecilkan skala secara sekata (maintain aspect ratio)
-					if (img.height > MAX_HEIGHT) {
-						const ratio = MAX_HEIGHT / img.height;
+					// Kawalan had tinggi maksimum imej
+					const MAX_HEIGHT = 1280;
+					let targetWidth = originalWidth;
+					let targetHeight = originalHeight;
+
+					if (originalHeight > MAX_HEIGHT) {
+						const ratio = MAX_HEIGHT / originalHeight;
 						targetHeight = MAX_HEIGHT;
-						targetWidth = img.width * ratio;
-						console.log(`Tinggi imej asal (${img.height}px) melebihi had. Skala dikecilkan ke: ${targetWidth}px x ${targetHeight}px`);
+						targetWidth = originalWidth * ratio;
+						console.log(`[PROSES] Saiz asal: ${originalWidth}x${originalHeight}. Had tinggi aktif! Saiz baharu: ${targetWidth}x${targetHeight}`);
+					} else {
+						console.log(`[PROSES] Saiz imej (${originalHeight}px) di bawah had tinggi.`);
 					}
 
-					// Set dimensi canvas mengikut saiz baharu yang telah dihadkan
 					canvas.width = targetWidth;
 					canvas.height = targetHeight;
 
-					// Aktifkan kualiti penataan imej yang tinggi
 					ctx.imageSmoothingEnabled = true;
 					ctx.imageSmoothingQuality = "high";
 
 					ctx.clearRect(0, 0, canvas.width, canvas.height);
-					ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+					ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-					// Ekstrak imej ke bentuk Base64 dengan kualiti maksimum (1.0)
 					const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
 
-					// Lepaskan memori SEBELUM resolve
-					URL.revokeObjectURL(img.src);
-
-					// Pulangkan string Base64
+					URL.revokeObjectURL(objectUrl);
 					resolve(dataUrl);
 				};
+
+				img.src = objectUrl;
 			});
 		},
 
@@ -81,7 +81,7 @@ let GetPhoto = {
 				// 1. Tunggu gambar diambil dari kamera
 				let file = await this.openCamera();
 
-				// 2. Tunggu proses olah gambar ke canvas selesai (Serta dihadkan tinggi)
+				// 2. Tunggu proses olah gambar ke canvas selesai
 				let base64Image = await this.drawImageToCanvas(file);
 
 				// 3. Masukkan ke dalam array mengikut indeks semasa
@@ -96,7 +96,6 @@ let GetPhoto = {
 				if (this.photoCountCurrent >= this.photoCount) {
 					console.log("Semua gambar selesai diambil, bersiap sedia untuk hantar ke EDIT:", this.arrayPhotoData);
 
-					// BERSIHKAN PROXY DI SINI sebelum hantar
 					const rawArray = JSON.parse(JSON.stringify(this.arrayPhotoData));
 
 					// Navigasi ke page Edit
@@ -117,26 +116,27 @@ let GetPhoto = {
 		console.log("Had keperluan gambar untuk sesi ini:", this.photoCount);
 	},
 	template: `
-          <div class="container text-center p-4">
-			<div class="sss">
-		<div class="outline">
+          <div>
+               <div class="container text-center p-4">
+                    <div class="sss">
+                         <div class="outline"></div>
+                         <div class="ic"></div>
+                    </div>
+               </div>
 
-		</div>
-		<div class="ic">
+               <div class="container text-center p-4">
+                    <h3 class="mb-3">Sesi Tangkap Gambar ({{ photoCountCurrent }} / {{ photoCount }})</h3>
+                    
+                    <button class="btn btn-primary btn-lg" @click="getPhoto">
+                         <i class="fa-solid fa-camera me-2"></i> Ambil Gambar
+                    </button>
 
-		</div>
-	</div>
-               <h3 class="mb-3">Ambil Gambar Secara MENEGAK</h3>
-               <h3 class="mb-3">Gambar ({{ photoCountCurrent }} / {{ photoCount }})</h3>
-               
-               <button class="btn btn-primary btn-lg" @click="getPhoto">
-                    <i class="fa-solid fa-camera me-2"></i> Ambil Gambar
-               </button>
-
-               <div class="mt-3 text-muted" v-if="photoCountCurrent < photoCount">
-                    Sila ambil gambar sehingga cukup {{ photoCount }} keping untuk dihantar.
+                    <div class="mt-3 text-muted" v-if="photoCountCurrent < photoCount">
+                         Sila ambil gambar sehingga cukup {{ photoCount }} keping untuk dihantar.
+                    </div>
                </div>
           </div>
      `
 }
+
 export default GetPhoto;
