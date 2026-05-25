@@ -107,7 +107,7 @@ let Edit = {
 					viewMode: 1,
 					dragMode: 'move',
 					autoCropArea: 0.85,
-					aspectRatio: 85 / 54, // Kekalkan nisbah IC semasa pelarasan manual
+					aspectRatio: 110 / 70, // Kekalkan nisbah IC semasa pelarasan manual
 					responsive: true,
 					restore: false,
 					ready() {
