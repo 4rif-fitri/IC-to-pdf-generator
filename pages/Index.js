@@ -20,7 +20,7 @@ let Index = {
 			<button class="btn btn-primary w-50" data-bs-toggle="modal" data-bs-target="#modal">
 				Scan Your IC
 			</button>
-			<p class="text-secondary asdfg">&copy;Arif</p>
+			<p class="text-secondary asdfg">&copy;Arif Fitri</p>
 
 		</div>
 	
